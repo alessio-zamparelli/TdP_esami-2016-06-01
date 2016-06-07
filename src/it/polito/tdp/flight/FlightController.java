@@ -6,6 +6,7 @@ import java.util.ResourceBundle;
 
 import it.polito.tdp.flight.model.Airline;
 import it.polito.tdp.flight.model.Airport;
+import it.polito.tdp.flight.model.AirportDistance;
 import it.polito.tdp.flight.model.Model;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -34,7 +35,21 @@ public class FlightController {
     @FXML
     void doRaggiungibili(ActionEvent event) {
     	
-
+ 
+    	Airline airline = boxAirline.getValue() ;
+    	Airport start = boxAirport.getValue() ;
+    	if(airline==null || start==null) {
+    		txtResult.appendText("Selezionare compagnia e aeroporto\n") ;
+    		return ;
+    	}
+    	
+    	List<AirportDistance> list = model.getDestinations(airline, start) ;
+    	
+    	txtResult.clear();
+    	txtResult.appendText("Distanze da "+start.getName()+"\n");
+    	for(AirportDistance ad: list)
+    		txtResult.appendText(String.format("%s (%.2f km) - %d steps\n", 
+    				ad.getAirport().getName(), ad.getDistance(), ad.getTratte()));
     }
 
     @FXML
@@ -60,7 +75,6 @@ public class FlightController {
     	for(Airport a: reachedAirports) {
     		txtResult.appendText(a.getName()+"\n") ;
     	}
-    	
     }
 
     @FXML

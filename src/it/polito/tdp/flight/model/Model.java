@@ -6,7 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jgrapht.GraphPath;
 import org.jgrapht.Graphs;
+import org.jgrapht.alg.DijkstraShortestPath;
+import org.jgrapht.alg.FloydWarshallShortestPaths;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
@@ -51,12 +54,12 @@ public class Model {
 		if (this.myAirline == null || !this.myAirline.equals(airline)) {
 
 			this.myAirline = airline;
-			System.out.println("Searching " + airline.toString() + "\n");
+			//System.out.println("Searching " + airline.toString() + "\n");
 
 			FlightDAO dao = new FlightDAO();
 
 			List<Integer> airportIds = dao.getReachedAirportsID(this.myAirline);
-			System.out.println("Found " + airportIds.size() + " airports\n");
+			//System.out.println("Found " + airportIds.size() + " airports\n");
 
 			this.reachedAirports = new ArrayList<Airport>();
 			for (Integer id : airportIds)
@@ -100,17 +103,40 @@ public class Model {
 				Airport a2 = airportMap.get(r.getDestinationAirportId());
 
 				if (a1 != null && a2 != null) {
-					
-					LatLng c1 = new LatLng(a1.getLatitude(), a1.getLongitude()) ;
-					LatLng c2 = new LatLng(a2.getLatitude(), a2.getLongitude()) ;
-					double distance = LatLngTool.distance(c1, c2, LengthUnit.KILOMETER) ;
+
+					LatLng c1 = new LatLng(a1.getLatitude(), a1.getLongitude());
+					LatLng c2 = new LatLng(a2.getLatitude(), a2.getLongitude());
+					double distance = LatLngTool.distance(c1, c2, LengthUnit.KILOMETER);
 
 					Graphs.addEdge(graph, a1, a2, distance);
-					System.out.format("%s->%s %.0fkm\n",a1,a2,distance);
+					// System.out.format("%s->%s %.0fkm\n", a1, a2, distance);
 
 				}
 			}
 		}
+
+	}
+
+	public List<AirportDistance> getDestinations(Airline airline, Airport start) {
+
+		List<AirportDistance> list = new ArrayList<>();
+
+		for (Airport end : reachedAirports) {
+			DijkstraShortestPath<Airport, DefaultWeightedEdge> dsp = new DijkstraShortestPath<>(graph, start, end);
+			GraphPath<Airport, DefaultWeightedEdge> p = dsp.getPath();
+			if (p != null) {
+				list.add(new AirportDistance(end, p.getWeight(), p.getEdgeList().size()));
+			}
+		}
+
+		list.sort(new Comparator<AirportDistance>() {
+			@Override
+			public int compare(AirportDistance o1, AirportDistance o2) {
+				return Double.compare(o1.getDistance(), o2.getDistance());
+			}
+		});
+
+		return list;
 
 	}
 
